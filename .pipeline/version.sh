@@ -2,26 +2,39 @@
 
 set -e
 
-if [[ -n "${VALETUDO_VERSION}" ]]; then
-    echo "environment var 'VALETUDO_VERSION' is alrady set, this probably means that a specific/version tag is being built manually" >&2
-    echo "VALETUDO_VERSION: ${VALETUDO_VERSION}'" >&2
-    echo >&2
-    echo "will use this value and not look for tha latest git tag" >&2
-    sleep 5
-else
-    PWD_REPO_NAME=$(basename $(git rev-parse --show-toplevel))
-    if [[ "$PWD_REPO_NAME" != "Valetudo" ]]; then
-        GIT_CHDIR_OPT="-C Valetudo/"
-    fi
+export GIT_CONFIG_PARAMETERS="'color.ui=always'"
+GIT_CONFIG_PARAMETERS="${GIT_CONFIG_PARAMETERS} 'advice.detachedHead=false'"
+
+export PWD_REPO_PATH=$(git rev-parse --show-toplevel)
+export PWD_REPO_NAME=$(basename $PWD_REPO_PATH)
+#export PWD_REPO_PATH=$(git rev-parse --git-dir)
+
+if [[ "$PWD_REPO_NAME" != "Valetudo" ]]; then
+    GIT_CHDIR_OPT="-C Valetudo/"
+    export GIT_CHDIR_OPT
+fi
+
+if [[ -n "${BUILD_SNAPSHOT}" && "${BUILD_SNAPSHOT}" != "false" ]]; then
+    # Jenkins will set this to "false" since it is the name of the build parameter
+    VALETUDO_NPM_VERSION=$(jq -r .version ${PWD_REPO_PATH}/Valetudo/package.json)
+    VALETUDO_VERSION="${VALETUDO_NPM_VERSION}-SNAPSHOT"
+elif [[ -z "${VALETUDO_VERSION}" ]]; then
+    # latest tag (annotated or not)
+    #LATEST_TAG=$(git $GIT_CHDIR_OPT tag -l --sort=-creatordate | head -n 1)
+    # latest annotated tag (releases)
     LATEST_TAG=$(git $GIT_CHDIR_OPT describe --tags --abbrev=0)
     VALETUDO_VERSION=$LATEST_TAG
-    export VALETUDO_VERSION
 fi
+
+export VALETUDO_VERSION
 
 if [[ -t 1 ]]; then
-    echo "version: '${VALETUDO_VERSION}'"
+    if [[ -n "${VERSION_PRINT}" ]]; then
+        echo "version: '${VALETUDO_VERSION}'"
+    fi
 else
-    echo $VALETUDO_VERSION
+    if [[ -n "JENKINS_VERSION" || -n "JENKINS_HOME" ]]; then
+        echo $VALETUDO_VERSION
+    fi
 fi
-
 
