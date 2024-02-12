@@ -25,6 +25,7 @@ pipeline {
                 script {
                     // used in post success
                     env.GITEA_USER = env.JOB_NAME.split('/')[0]
+                    env.GITEA_SECRET_ID = "gitea-user-${env.GITEA_USER}-full-token"
                     env.VALETUDO_GIT_URL = params.use_github ? "https://github.com/Hypfer" : "https://git.sudo.is/mirrors"
                     sh "env"
 
@@ -32,7 +33,9 @@ pipeline {
                         git(url: env.VALETUDO_GIT_URL + "/Valetudo", branch: env.VALETUDO_MAIN_BRANCH)
                         sh("git fetch --tags")
                         env.VALETUDO_VERSION = sh(script: "../.pipeline/version.sh", returnStdout: true).trim()
-                        sh "git checkout ${env.VALETUDO_VERSION}"
+                        if (env.BUILD_SNAPSHOT != "true") {
+                            sh "git checkout ${env.VALETUDO_VERSION}"
+                        }
                     }
                     currentBuild.displayName += " - v${env.VALETUDO_VERSION}"
                     currentBuild.description = "Valetudo v${env.VALETUDO_VERSION}"
@@ -46,7 +49,7 @@ pipeline {
                 sh ".pipeline/build.sh"
             }
         }
-        stage('Checksums') {
+        stage('checksums') {
             steps {
                 sh ".pipeline/check-sha256sums.sh"
             }
@@ -56,6 +59,16 @@ pipeline {
                 sh ".pipeline/package.sh"
             }
         }
+        stage('publish') {
+            when {
+                branch "main"
+            }
+            steps {
+                withCredentials([string(credentialsId: env.GITEA_SECRET_ID, variable: 'GITEA_SECRET')]) {
+                    sh ".pipeline/publish.sh"
+                }
+            }
+        }
     }
     post {
         always {
@@ -63,9 +76,6 @@ pipeline {
         }
         success {
             archiveArtifacts(artifacts: "dist/*", fingerprint: true)
-            withCredentials([string(credentialsId: "gitea-user-${env.GITEA_USER}-full-token", variable: 'GITEA_SECRET')]) {
-                sh ".pipeline/publish.sh"
-            }
         }
         cleanup {
             sh ".pipeline/clean.sh"

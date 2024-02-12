@@ -16,7 +16,13 @@ fi
 
 if [[ -n "${BUILD_SNAPSHOT}" && "${BUILD_SNAPSHOT}" != "false" ]]; then
     # Jenkins will set this to "false" since it is the name of the build parameter
-    VALETUDO_NPM_VERSION=$(jq -r .version ${PWD_REPO_PATH}/Valetudo/package.json)
+    if [[ "$(basename $(pwd))" == "Valetudo" ]]; then
+        PACKAGE_JSON="$(pwd)/package.json"
+    else
+        PACKAGE_JSON="${PWD_REPO_PATH}/Valetudo/package.json"
+    fi
+
+    VALETUDO_NPM_VERSION=$(jq -r .version $PACKAGE_JSON)
     VALETUDO_VERSION="${VALETUDO_NPM_VERSION}-SNAPSHOT"
 elif [[ -z "${VALETUDO_VERSION}" ]]; then
     # latest tag (annotated or not)
