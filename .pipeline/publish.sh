@@ -14,6 +14,22 @@ gitea_upload_file() {
         https://${GITEA_SECRET}@${GITEA_URL}/api/packages/${GITEA_USER}/generic/valetudo/${VALETUDO_VERSION}/$1
 }
 
+gitea_release_create() {
+    curl -s -X 'POST' \
+  'https://${GITEA_SECRET}@${GITEA_URL}/api/v1/repos/${GITEA_USER}/build-valetudo/releases' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "body": "Valetudo release: ${VERSION}",
+  "draft": false,
+  "name": "Valetudo ${VERSION}",
+  "prerelease": false,
+  "tag_name": "${VERSION}",
+  "target_commitish": "${GIT_COMMIT}"
+}' | jq .
+}
+
+
 
 for arch in "aarch64" "armv7"; do
     gitea_upload_file "valetudo_${VALETUDO_VERSION}_${arch}.tar.gz"
@@ -22,3 +38,5 @@ done
 for item in "openapi.json" "changelog.md" "changelog_nightly.md" "valetudo_release_manifest.json"; do
     gitea_upload_file ${item}
 done
+
+gitea_release_create || true
