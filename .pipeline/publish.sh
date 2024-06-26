@@ -37,12 +37,12 @@ gitea_release_file() {
   -F "attachment=@$2;type=application/x-sh" | jq .
 }
 
-gitea_release_create || true
+#gitea_release_create || true
 
 for arch in "aarch64" "armv7"; do
     tarball="valetudo_${VALETUDO_VERSION}_${arch}.tar.gz"
     gitea_upload_file $tarball 
-    gitea_release_file $tarball
+    #gitea_release_file $tarball
 done
 
 for item in "openapi.json" "changelog.md" "changelog_nightly.md" "valetudo_release_manifest.json"; do
