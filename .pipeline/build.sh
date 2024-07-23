@@ -16,6 +16,7 @@ if [[ -z "$SKIP_BUILD" ]]; then
     (
     set -x
     docker build \
+        --pull \
         --progress plain \
         --target export \
         --output dist/ \
