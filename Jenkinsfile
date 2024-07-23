@@ -37,8 +37,8 @@ pipeline {
                             sh "git checkout ${env.VALETUDO_VERSION}"
                         }
                     }
-                    currentBuild.displayName += " - v${env.VALETUDO_VERSION}"
-                    currentBuild.description = "Valetudo v${env.VALETUDO_VERSION}"
+                    currentBuild.displayName += " - ${env.VALETUDO_VERSION}"
+                    currentBuild.description = "Valetudo ${env.VALETUDO_VERSION}"
                     writeFile(file: "dist/valetudo_version.txt", text: env.VALETUDO_VERSION)
                 }
                 sh "ls --color=always -l"
