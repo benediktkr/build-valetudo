@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+        label "hcloud-docker-x86"
+    }
     parameters {
         booleanParam(name: "use_github", defaultValue: true, description: "use github repos")
         booleanParam(name: "BUILD_SNAPSHOT", defaultValue: false, description: "build current version at HEAD")
